@@ -243,6 +243,8 @@ void idProjectile::Create( idEntity *owner, const idVec3 &start, const idVec3 &d
 
 	damagePower = 1.0f;
 
+	renderEntity.suppressSurfaceInViewID = -8;	// sikk - Depth Render
+
 	UpdateVisuals();
 
 	state = CREATED;
@@ -281,6 +283,7 @@ idProjectile::Launch
 */
 void idProjectile::Launch( const idVec3 &start, const idVec3 &dir, const idVec3 &pushVelocity, const float timeSinceFire, const float launchPower, const float dmgPower ) {
 	float			fuse;
+	float			startthrust;
 	float			endthrust;
 	idVec3			velocity;
 	idAngles		angular_velocity;
@@ -294,6 +297,7 @@ void idProjectile::Launch( const idVec3 &start, const idVec3 &dir, const idVec3 
 	idVec3			gravVec;
 	idVec3			tmp;
 	idMat3			axis;
+	int				thrust_start;
 	int				contents;
 	int				clipMask;
 
@@ -305,6 +309,7 @@ void idProjectile::Launch( const idVec3 &start, const idVec3 &dir, const idVec3 
 	}
 
 	thrust				= spawnArgs.GetFloat( "thrust" );
+	startthrust			= spawnArgs.GetFloat( "thrust_start" );
 	endthrust			= spawnArgs.GetFloat( "thrust_end" );
 
 	spawnArgs.GetVector( "velocity", "0 0 0", velocity );
@@ -332,6 +337,7 @@ void idProjectile::Launch( const idVec3 &start, const idVec3 &dir, const idVec3 
 	}
 
 	thrust *= mass;
+	thrust_start = SEC2MS( startthrust ) + gameLocal.time;
 	thrust_end = SEC2MS( endthrust ) + gameLocal.time;
 
 	lightStartTime = 0;
@@ -363,7 +369,7 @@ void idProjectile::Launch( const idVec3 &start, const idVec3 &dir, const idVec3 
 	}
 
 	// don't do tracers on client, we don't know origin and direction
-	if ( spawnArgs.GetBool( "tracers" ) && gameLocal.random.RandomFloat() > 0.5f ) {
+	if ( spawnArgs.GetBool( "tracers" ) && ( ( gameLocal.random.RandomFloat() * 0.99999f ) < g_tracerFrequency.GetFloat() ) ) {	// sikk - Tracer Frequency
 		SetModel( spawnArgs.GetString( "model_tracer" ) );
 		projectileFlags.isTracer = true;
 	}
@@ -582,6 +588,14 @@ bool idProjectile::Collide( const trace_t &collision, const idVec3 &velocity ) {
 				idPlayer *player = static_cast<idPlayer *>( owner.GetEntity() );
 				player->AddProjectileHits( 1 );
 				damageScale *= player->PowerUpModifier( PROJECTILE_DAMAGE );
+
+// sikk---> Blood Spray Screen Effect
+				if ( g_showBloodSpray.GetBool() ) {
+					idVec3 vLength = player->GetEyePosition() - ent->GetPhysics()->GetOrigin();
+					if ( vLength.Length() <= g_bloodSprayDistance.GetFloat() && ( gameLocal.random.RandomFloat() * 0.99999f ) < g_bloodSprayFrequency.GetFloat() )
+						player->playerView.AddBloodSpray( g_bloodSprayTime.GetFloat() );
+				}
+// <---sikk
 			}
 		}
 
@@ -828,6 +842,20 @@ void idProjectile::Explode( const trace_t &collision, idEntity *ignore ) {
 		} else {
 			fxname = spawnArgs.GetString( "model_smoke" );
 		}
+
+/*		switch ( surfaceType ) {
+			case SURFTYPE_NONE:			fxname = spawnArgs.GetString( "model_smokespark" ); break;
+			case SURFTYPE_METAL:		fxname = spawnArgs.GetString( "model_impact_metal" ); break;
+			case SURFTYPE_STONE:		fxname = spawnArgs.GetString( "model_impact_stone" ); break;
+			case SURFTYPE_FLESH:		fxname = spawnArgs.GetString( "model_impact_flesh" ); break;
+			case SURFTYPE_WOOD:			fxname = spawnArgs.GetString( "model_impact_wood" ); break;
+			case SURFTYPE_CARDBOARD:	fxname = spawnArgs.GetString( "model_impact_cardboard" ); break;
+			case SURFTYPE_LIQUID:		fxname = spawnArgs.GetString( "model_impact_liquid" ); break;
+			case SURFTYPE_GLASS:		fxname = spawnArgs.GetString( "model_impact_glass" ); break;
+			case SURFTYPE_PLASTIC:		fxname = spawnArgs.GetString( "model_impact_plastic" ); break;
+			case SURFTYPE_RICOCHET:		fxname = spawnArgs.GetString( "model_ricochet" ); break;
+			default:					fxname = spawnArgs.GetString( "model_smoke" ); break;
+		}*/
 	}
 
 	if ( fxname && *fxname ) {
@@ -838,6 +866,9 @@ void idProjectile::Explode( const trace_t &collision, idEntity *ignore ) {
 		renderEntity.shaderParms[SHADERPARM_ALPHA] = 1.0f;
 		renderEntity.shaderParms[SHADERPARM_TIMEOFFSET] = -MS2SEC( gameLocal.time );
 		renderEntity.shaderParms[SHADERPARM_DIVERSITY] = gameLocal.random.CRandomFloat();
+
+		renderEntity.suppressSurfaceInViewID = -8;	// sikk - Depth Render
+
 		Show();
 		removeTime = ( removeTime > 3000 ) ? removeTime : 3000;
 	}
@@ -887,10 +918,14 @@ void idProjectile::Explode( const trace_t &collision, idEntity *ignore ) {
 			if ( removeTime < delay * 1000 ) {
 				removeTime = ( delay + 0.10 ) * 1000;
 			}
-			PostEventSec( &EV_RadiusDamage, delay, ignore );
+// sikk---> Entities hit directly by a projectile will no longer be ignored by splash damage
+//			PostEventSec( &EV_RadiusDamage, delay, ignore );
+			PostEventSec( &EV_RadiusDamage, delay, NULL );
 		} else {
-			Event_RadiusDamage( ignore );
+//			Event_RadiusDamage( ignore );
+			Event_RadiusDamage( NULL );
 		}
+// <---sikk
 	}
 
 	// spawn debris entities
@@ -1210,11 +1245,11 @@ bool idProjectile::ClientReceiveEvent( int event, int time, const idBitMsg &msg 
 			DefaultDamageEffect( this, spawnArgs, collision, velocity );
 			return true;
 		}
-		default:
-			break;
+		default: {
+			return idEntity::ClientReceiveEvent( event, time, msg );
+		}
 	}
-
-	return idEntity::ClientReceiveEvent( event, time, msg );
+//	return false;	// sikk - warning C4702: unreachable code
 }
 
 /*
@@ -2142,10 +2177,25 @@ void idDebris::Restore( idRestoreGame *savefile ) {
 idDebris::Launch
 =================
 */
+/*********************************************************
+doomtrinity->
+Following method includes code from Denton's mod v. 2.02
+to enhance brass ejection behaviour.
+Be sure to add the macro
+_DENTONMOD
+in the game properties if you want to compile the code
+with his changes.
+Thanks to Clone JC Denton
+*********************************************************/
 void idDebris::Launch( void ) {
 	float		fuse;
 	idVec3		velocity;
+#ifdef _DENTONMOD
+	idVec3		angular_velocity_vect;
+#else
 	idAngles	angular_velocity;
+#endif
+
 	float		linear_friction;
 	float		angular_friction;
 	float		contact_friction;
@@ -2159,7 +2209,12 @@ void idDebris::Launch( void ) {
 	renderEntity.shaderParms[ SHADERPARM_TIMEOFFSET ] = -MS2SEC( gameLocal.time );
 
 	spawnArgs.GetVector( "velocity", "0 0 0", velocity );
+#ifdef _DENTONMOD
+	angular_velocity_vect = spawnArgs.GetAngles( "angular_velocity", "0 0 0").ToAngularVelocity();
+#else
 	spawnArgs.GetAngles( "angular_velocity", "0 0 0", angular_velocity );
+#endif
+
 
 	linear_friction		= spawnArgs.GetFloat( "linear_friction" );
 	angular_friction	= spawnArgs.GetFloat( "angular_friction" );
@@ -2175,9 +2230,29 @@ void idDebris::Launch( void ) {
 	}
 
 	if ( randomVelocity ) {
+#ifdef _DENTONMOD
+		float rand = spawnArgs.GetFloat("linear_velocity_rand", "0.35"); 
+
+		// sets velocity randomly between ((1-rand)*100)% and ((1+rand)*100)%
+		// e.g.1: if rand = 0.2, velocity will be randomly set between 80% and 120%
+		// e.g.2: if rand = 0.3, velocity will be randomly set between 70% and 130%
+		// and so on.
+		velocity.x *= gameLocal.random.RandomFloat()*rand*2.0 + 1.0 -  rand;
+		velocity.y *= gameLocal.random.RandomFloat()*rand*2.0 + 1.0 -  rand;
+		velocity.z *= gameLocal.random.RandomFloat()*rand*2.0 + 1.0 -  rand;
+
+		// do not perform following calculations unless there's key in decl that says so.
+		if( spawnArgs.GetFloat( "angular_velocity_rand", "0.0", rand) && rand > 0.0f ) {
+			angular_velocity_vect.x *= gameLocal.random.RandomFloat()*rand*2.0 + 1.0 -  rand;
+			angular_velocity_vect.y *= gameLocal.random.RandomFloat()*rand*2.0 + 1.0 -  rand;
+			angular_velocity_vect.z *= gameLocal.random.RandomFloat()*rand*2.0 + 1.0 -  rand;
+		}
+#else
 		velocity.x *= gameLocal.random.RandomFloat() + 0.5f;
 		velocity.y *= gameLocal.random.RandomFloat() + 0.5f;
 		velocity.z *= gameLocal.random.RandomFloat() + 0.5f;
+#endif		
+
 	}
 
 	if ( health ) {
@@ -2218,8 +2293,22 @@ void idDebris::Launch( void ) {
 	physicsObj.SetGravity( gravVec * gravity );
 	physicsObj.SetContents( 0 );
 	physicsObj.SetClipMask( MASK_SOLID | CONTENTS_MOVEABLECLIP );
+#ifdef _DENTONMOD
+	// Make sure that the linear velocity is added with 
+	// owner's linear velocity for more accurate physics simulation. 
+	idEntity *ownerEnt = owner.GetEntity();
+	if( ownerEnt != NULL ) {
+		physicsObj.SetLinearVelocity( (axis[ 0 ] * velocity[ 0 ] + axis[ 1 ] * velocity[ 1 ] + axis[ 2 ] * velocity[ 2 ]) + ownerEnt->GetPhysics()->GetLinearVelocity());
+	}
+	else {
+		physicsObj.SetLinearVelocity( axis[ 0 ] * velocity[ 0 ] + axis[ 1 ] * velocity[ 1 ] + axis[ 2 ] * velocity[ 2 ] );
+	}
+	physicsObj.SetAngularVelocity( angular_velocity_vect * axis );
+#else
 	physicsObj.SetLinearVelocity( axis[ 0 ] * velocity[ 0 ] + axis[ 1 ] * velocity[ 1 ] + axis[ 2 ] * velocity[ 2 ] );
 	physicsObj.SetAngularVelocity( angular_velocity.ToAngularVelocity() * axis );
+#endif
+
 	physicsObj.SetOrigin( GetPhysics()->GetOrigin() );
 	physicsObj.SetAxis( axis );
 	SetPhysics( &physicsObj );

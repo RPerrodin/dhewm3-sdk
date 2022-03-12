@@ -29,6 +29,7 @@ If you have questions concerning this license or the applicable additional terms
 #ifndef __GAME_LOCAL_H__
 #define	__GAME_LOCAL_H__
 
+#include "physics/Force_Grab.h"	// sikk - Object Manipulation
 #include "GameBase.h"
 
 #include "idlib/containers/StrList.h"
@@ -44,6 +45,9 @@ If you have questions concerning this license or the applicable additional terms
 #include "anim/Anim.h"
 #include "Pvs.h"
 #include "MultiplayerGame.h"
+
+#include "Grab.h"	// sikk - Object Manipulation
+
 
 #ifdef ID_DEBUG_UNINITIALIZED_MEMORY
 // This is real evil but allows the code to inspect arbitrary class variables.
@@ -293,6 +297,34 @@ public:
 
 	idEntityPtr<idEntity>	lastGUIEnt;				// last entity with a GUI, used by Cmd_NextGUI_f
 	int						lastGUI;				// last GUI on the lastGUIEnt
+
+	idList<int>				currentLights;			// sikk - Soft Shadows PostProcess
+
+// sikk---> Explosion FX PostProcess
+	idVec3					explosionOrigin;
+	int						explosionRadius;
+	int						explosionDamage;
+	int						explosionTime;
+// <---sikk
+
+// sikk---> Random Encounters System
+	idList<int>				randomEnemyList;		// current list of eligible enemies
+	int						randomEnemyListNum;		// holds the size of the list for when loading a save game
+	int						randomEnemyTime;		// holds next spawn time
+	int						randomEnemyTally;		// holds number of random enemies that are active
+	int						GetEnemyNumFromName( idStr name );
+	idStr					GetEnemyNameFromNum( int num );
+	idStr					GetHellSkin( int num );
+	bool					SpawnRandomEnemy( void );
+// <---sikk
+
+// sikk---> Portal Sky Box
+	idEntityPtr<idEntity>	portalSkyEnt;
+	bool					portalSkyActive;
+	void					SetPortalSkyEnt( idEntity *ent ) {	portalSkyEnt = ent; }
+	bool					IsPortalSkyAcive( void ) { return portalSkyActive; }
+	pvsHandle_t				GetPlayerPVS( void ) { return playerPVS; };
+// <---sikk
 
 	// ---------------------- Public idGame Interface -------------------
 

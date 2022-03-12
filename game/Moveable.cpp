@@ -898,6 +898,9 @@ void idExplodingBarrel::AddParticles( const char *name, bool burn ) {
 			particleRenderEntity.shaderParms[ SHADERPARM_ALPHA ] = rgb;
 			particleRenderEntity.shaderParms[ SHADERPARM_TIMEOFFSET ] = -MS2SEC( gameLocal.realClientTime );
 			particleRenderEntity.shaderParms[ SHADERPARM_DIVERSITY ] = ( burn ) ? 1.0f : gameLocal.random.RandomInt( 90 );
+
+			particleRenderEntity.suppressSurfaceInViewID = -8;	// sikk - Depth Render
+
 			if ( !particleRenderEntity.hModel ) {
 				particleRenderEntity.hModel = renderModelManager->FindModel( name );
 			}
@@ -1179,16 +1182,16 @@ idExplodingBarrel::ClientReceiveEvent
 ================
 */
 bool idExplodingBarrel::ClientReceiveEvent( int event, int time, const idBitMsg &msg ) {
-
 	switch( event ) {
-		case EVENT_EXPLODE:
+		case EVENT_EXPLODE: {
 			if ( gameLocal.realClientTime - msg.ReadInt() < spawnArgs.GetInt( "explode_lapse", "1000" ) ) {
 				ExplodingEffects( );
 			}
 			return true;
-		default:
-			break;
+		}
+		default: {
+			return idBarrel::ClientReceiveEvent( event, time, msg );
+		}
 	}
-
-	return idBarrel::ClientReceiveEvent( event, time, msg );
+//	return false;	// sikk - warning C4702: unreachable code
 }

@@ -40,7 +40,7 @@ If you have questions concerning this license or the applicable additional terms
 ===============================================================================
 */
 
-#define contactEntity_t		idEntityPtr<idEntity>
+#define contactEntity_t		idEntityPtr<idEntity>;
 
 class idPhysics_Base : public idPhysics {
 

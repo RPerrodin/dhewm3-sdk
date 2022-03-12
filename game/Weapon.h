@@ -132,6 +132,8 @@ public:
 	void					GetWeaponAngleOffsets( int *average, float *scale, float *max );
 	void					GetWeaponTimeOffsets( float *time, float *scale );
 	bool					BloodSplat( float size );
+	bool					HasHeadJoint( void );		// doomtrinity-headanim
+	idAngles				GetHeadAngle( void );		// doomtrinity-headanim //was idVec3
 
 	// Ammo
 	static ammo_t			GetAmmoNumForName( const char *ammoname );
@@ -144,6 +146,7 @@ public:
 	int						ClipSize( void ) const;
 	int						LowAmmo( void ) const;
 	int						AmmoRequired( void ) const;
+		int						AmmoCount() const;// doomtrinity (D3XP)
 
 	virtual void			WriteToSnapshot( idBitMsgDelta &msg ) const;
 	virtual void			ReadFromSnapshot( const idBitMsgDelta &msg );
@@ -157,6 +160,24 @@ public:
 	virtual bool			ClientReceiveEvent( int event, int time, const idBitMsg &msg );
 
 	virtual void			ClientPredictionThink( void );
+
+	float					wm_hide_distance;	// sikk - Weapon Management: Awareness
+
+	idEntityPtr<idAnimatedEntity>*	GetWorldModel( void ) { return &worldModel; };	// sikk - Depth Render
+
+// sikk---> Crosshair Positioning
+	idVec3					GetMuzzleOrigin( void ) { return muzzleOrigin; };
+	idMat3					GetMuzzleAxis( void ) { return muzzleAxis; };
+	jointHandle_t			GetBarrelJointView( void ) { return barrelJointView; };
+	idDict					GetProjectileDict( void ) { return projectileDict; };
+// <---sikk
+	
+// sikk---> Soft Shadows PostProcess
+	renderLight_t*			GetMuzzleFlash( void ) { return &muzzleFlash; };
+	renderLight_t*			GetWorldMuzzleFlash( void ) { return &worldMuzzleFlash; };
+	int						GetMuzzleFlashHandle( void ) { return muzzleFlashHandle; };
+	int						GetWorldMuzzleFlashHandle( void ) { return worldMuzzleFlashHandle; };
+// <---sikk
 
 private:
 	// script control
@@ -268,6 +289,7 @@ private:
 	jointHandle_t			ejectJointView;
 	jointHandle_t			guiLightJointView;
 	jointHandle_t			ventLightJointView;
+	jointHandle_t			headJointView;		// doomtrinity-headanim
 
 	jointHandle_t			flashJointWorld;
 	jointHandle_t			barrelJointWorld;
@@ -352,6 +374,7 @@ private:
 	void					Event_AutoReload( void );
 	void					Event_NetReload( void );
 	void					Event_IsInvisible( void );
+	void					Event_IsLowered( void ); // doomtrinity
 	void					Event_NetEndReload( void );
 };
 

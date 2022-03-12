@@ -29,6 +29,9 @@ If you have questions concerning this license or the applicable additional terms
 #ifndef __GAME_ENTITY_H__
 #define __GAME_ENTITY_H__
 
+class idProjectile; // PD3
+
+
 #include "idlib/math/Curve.h"
 #include "framework/DeclParticle.h"
 
@@ -113,7 +116,6 @@ public:
 	idList<signal_t> signal[ NUM_SIGNALS ];
 };
 
-
 class idEntity : public idClass {
 public:
 	static const int		MAX_PVS_AREAS = 4;
@@ -163,6 +165,9 @@ public:
 
 							idEntity();
 							~idEntity();
+
+	void               CommonGetAimDir( const idVec3 &firePos, idEntity *aimAtEnt, idVec3 &aimDir ); // PD3
+	idProjectile*         CommonFireProjectile( const char *projDefName, const idVec3 &firePos, const idVec3 &dir ); // PD3
 
 	void					Spawn( void );
 
@@ -465,6 +470,9 @@ private:
 	void					Event_HasFunction( const char *name );
 	void					Event_CallFunction( const char *name );
 	void					Event_SetNeverDormant( int enable );
+
+	void               Event_FireProjectile( const char* projDefName , const idVec3 &firePos, const idAngles &fireAng ); // PD3
+	void               Event_FireProjAtTarget( const char* projDefName , const idVec3 &firePos, idEntity* aimAtEnt ); // PD3
 };
 
 /*
@@ -523,12 +531,16 @@ protected:
 
 private:
 	void					Event_GetJointHandle( const char *jointname );
-	void					Event_ClearAllJoints( void );
-	void					Event_ClearJoint( jointHandle_t jointnum );
-	void					Event_SetJointPos( jointHandle_t jointnum, jointModTransform_t transform_type, const idVec3 &pos );
-	void					Event_SetJointAngle( jointHandle_t jointnum, jointModTransform_t transform_type, const idAngles &angles );
-	void					Event_GetJointPos( jointHandle_t jointnum );
-	void					Event_GetJointAngle( jointHandle_t jointnum );
+	void 					Event_ClearAllJoints( void );
+	void 					Event_ClearJoint( jointHandle_t jointnum );
+	void 					Event_SetJointPos( jointHandle_t jointnum, jointModTransform_t transform_type, const idVec3 &pos );
+	void 					Event_SetJointAngle( jointHandle_t jointnum, jointModTransform_t transform_type, const idAngles &angles );
+	void 					Event_GetJointPos( jointHandle_t jointnum );
+	void 					Event_GetJointAngle( jointHandle_t jointnum );
+
+	void               Event_FireProjectileFromJoint( const char *projDefName, jointHandle_t jointnum, const idAngles &fireAng ); // PD3
+	void               Event_FireProjAtTargetFromJoint( const char *projDefName, jointHandle_t jointnum, idEntity *aimAtEnt ); // PD3
+
 };
 
 #endif /* !__GAME_ENTITY_H__ */

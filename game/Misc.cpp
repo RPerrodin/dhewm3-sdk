@@ -137,11 +137,11 @@ bool idPlayerStart::ClientReceiveEvent( int event, int time, const idBitMsg &msg
 			}
 			return true;
 		}
-		default:
-			break;
+		default: {
+			return idEntity::ClientReceiveEvent( event, time, msg );
+		}
 	}
-
-	return idEntity::ClientReceiveEvent( event, time, msg );
+//	return false;	// sikk - warning C4702: unreachable code
 }
 
 /*
@@ -1423,6 +1423,11 @@ void idStaticEntity::Spawn( void ) {
 	if ( model.Find( ".prt" ) >= 0 ) {
 		// we want the parametric particles out of sync with each other
 		renderEntity.shaderParms[ SHADERPARM_TIMEOFFSET ] = gameLocal.random.RandomInt( 32767 );
+
+// sikk---> Depth Render
+		renderEntity.suppressSurfaceInViewID = -8;
+		renderEntity.noShadow = 1;
+// <---sikk
 	}
 
 	fadeFrom.Set( 1, 1, 1, 1 );
@@ -2916,8 +2921,8 @@ idPhantomObjects::idPhantomObjects
 idPhantomObjects::idPhantomObjects() {
 	target			= NULL;
 	end_time		= 0;
-	throw_time		= 0.0f;
-	shake_time		= 0.0f;
+	throw_time 		= 0.0f;
+	shake_time 		= 0.0f;
 	shake_ang.Zero();
 	speed			= 0.0f;
 	min_wait		= 0;
@@ -3156,3 +3161,63 @@ void idPhantomObjects::Think( void ) {
 		BecomeInactive( TH_THINK );
 	}
 }
+
+// sikk---> Portal Sky Box
+/*
+===============================================================================
+
+idPortalSky
+
+===============================================================================
+*/
+
+CLASS_DECLARATION( idEntity, idPortalSky )
+	EVENT( EV_PostSpawn,	idPortalSky::Event_PostSpawn )
+	EVENT( EV_Activate,		idPortalSky::Event_Activate )
+END_CLASS
+
+/*
+===============
+idPortalSky::idPortalSky
+===============
+*/
+idPortalSky::idPortalSky( void ) {
+}
+
+/*
+===============
+idPortalSky::~idPortalSky
+===============
+*/
+idPortalSky::~idPortalSky( void ) {
+}
+
+/*
+===============
+idPortalSky::Spawn
+===============
+*/
+void idPortalSky::Spawn( void ) {
+	if ( !spawnArgs.GetBool( "triggered" ) ) {
+		PostEventMS( &EV_PostSpawn, 1 );
+	}
+}
+
+/*
+================
+idPortalSky::Event_PostSpawn
+================
+*/
+void idPortalSky::Event_PostSpawn() {
+	gameLocal.SetPortalSkyEnt( this );
+}
+
+/*
+================
+idPortalSky::Event_Activate
+================
+*/
+void idPortalSky::Event_Activate( idEntity *activator ) {
+	gameLocal.SetPortalSkyEnt( this );
+}
+// <---sikk

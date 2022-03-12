@@ -15,12 +15,15 @@ set(src_game_mod
 	# add additional .cpp files of your mod in game/
 	# (that you added to the ones already existant in the SDK/in dhewm3)
 	# like "game/MyFile.cpp" (without quotes, one file per line)
+	game/Grab.cpp
+	game/physics/Force_Grab.cpp
 )
 
 set(src_d3xp_mod
 	# add additional .cpp files of your mod in d3xp/
 	# (that you added to the ones already existant in the SDK/in dhewm3)
 	# like "d3xp/MyFile.cpp" (without quotes, one file per line)
+	d3xp/Grab.cpp
 )
 
 
