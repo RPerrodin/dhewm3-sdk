@@ -39,6 +39,9 @@ If you have questions concerning this license or the applicable additional terms
 #include "PlayerIcon.h"
 #include "GameEdit.h"
 
+#include "Grab.h"
+#include "Moveable.h"
+
 class idAI;
 
 /*

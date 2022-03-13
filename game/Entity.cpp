@@ -55,7 +55,6 @@ If you have questions concerning this license or the applicable additional terms
 */
 
 // overridable events
-
 const idEventDef EV_PostSpawn( "<postspawn>", NULL );
 const idEventDef EV_FindTargets( "<findTargets>", NULL );
 const idEventDef EV_Touch( "<touch>", "et" );
@@ -121,8 +120,6 @@ const idEventDef EV_StartFx( "startFx", "s" );
 const idEventDef EV_HasFunction( "hasFunction", "s", 'd' );
 const idEventDef EV_CallFunction( "callFunction", "s" );
 const idEventDef EV_SetNeverDormant( "setNeverDormant", "d" );
-const idEventDef EV_FireProjectile( "fireProjectile", "svv", 'e' ); // PD3
-const idEventDef EV_FireProjAtTarget( "fireProjAtTarget", "svE", 'e' ); // PD3
 
 ABSTRACT_DECLARATION( idClass, idEntity )
 	EVENT( EV_GetName,				idEntity::Event_GetName )
@@ -169,8 +166,8 @@ ABSTRACT_DECLARATION( idClass, idEntity )
 	EVENT( EV_GetMins,				idEntity::Event_GetMins)
 	EVENT( EV_GetMaxs,				idEntity::Event_GetMaxs )
 	EVENT( EV_Touches,				idEntity::Event_Touches )
-	EVENT( EV_SetGuiParm, 			idEntity::Event_SetGuiParm )
-	EVENT( EV_SetGuiFloat, 			idEntity::Event_SetGuiFloat )
+	EVENT( EV_SetGuiParm,			idEntity::Event_SetGuiParm )
+	EVENT( EV_SetGuiFloat,			idEntity::Event_SetGuiFloat )
 	EVENT( EV_GetNextKey,			idEntity::Event_GetNextKey )
 	EVENT( EV_SetKey,				idEntity::Event_SetKey )
 	EVENT( EV_GetKey,				idEntity::Event_GetKey )
@@ -188,86 +185,7 @@ ABSTRACT_DECLARATION( idClass, idEntity )
 	EVENT( EV_HasFunction,			idEntity::Event_HasFunction )
 	EVENT( EV_CallFunction,			idEntity::Event_CallFunction )
 	EVENT( EV_SetNeverDormant,		idEntity::Event_SetNeverDormant )
-	EVENT( EV_FireProjectile,      idEntity::Event_FireProjectile ) // PD3
-	EVENT( EV_FireProjAtTarget,      idEntity::Event_FireProjAtTarget ) // PD3
 END_CLASS
-
-/*
-================
-idEntity::CommonFireProjectile // PD3
-================
-*/
-idProjectile* idEntity::CommonFireProjectile( const char *projDefName , const idVec3 &firePos, const idVec3 &dir ) {
-   idProjectile   *proj;
-   idEntity      *ent;
-   idDict         projectileDict;
-
-   if ( gameLocal.isClient ) { return NULL; }
-
-   const idDeclEntityDef *projectileDef = gameLocal.FindEntityDef( projDefName, false );
-   if ( !projectileDef ) {
-      gameLocal.Warning( "No def '%s' found", projDefName );
-      return NULL;
-   }
-
-   projectileDict = projectileDef->dict;
-   if ( !projectileDict.GetNumKeyVals() ) {
-      gameLocal.Warning( "No projectile defined '%s'", projDefName );
-      return NULL;
-   }
-
-   if ( IsType( idPlayer::Type ) ) {
-      static_cast<idPlayer *>( this )->AddProjectilesFired(1);
-      gameLocal.AlertAI( this );
-   }
-
-   gameLocal.SpawnEntityDef( projectileDict, &ent, false );
-
-   if ( !ent || !ent->IsType( idProjectile::Type ) ) {
-      gameLocal.Error( "'%s' is not an idProjectile", projDefName );
-   }
-
-   if ( projectileDict.GetBool( "net_instanthit" ) ) {
-      ent->fl.networkSync = false;
-   }
-
-   proj = static_cast<idProjectile *>(ent);
-   proj->Create( this, firePos, dir );
-   proj->Launch( firePos, dir, vec3_origin ); 
-   return proj;
-}
-
-/*
-=====================
-idEntity::CommonGetAimDir // PD3
-=====================
-*/
-void idEntity::CommonGetAimDir( const idVec3 &firePos, idEntity *aimAtEnt, idVec3 &aimDir ) {
-   idVec3   mainTargetPos;
-   idVec3   secTargetPos; //not used, but necessary
-
-   if ( aimAtEnt ) { //target entity ok!
-      if ( aimAtEnt->IsType( idPlayer::Type ) ) { //player - head
-         static_cast<idPlayer *>( aimAtEnt )->GetAIAimTargets( aimAtEnt->GetPhysics()->GetOrigin(), mainTargetPos, secTargetPos );
-      } else if ( aimAtEnt->IsType( idActor::Type ) ) { //AI - chest
-         static_cast<idActor *>( aimAtEnt )->GetAIAimTargets( aimAtEnt->GetPhysics()->GetOrigin(), secTargetPos, mainTargetPos );
-      } else { //center
-         mainTargetPos = aimAtEnt->GetPhysics()->GetAbsBounds().GetCenter();
-      }
-      
-      aimDir = mainTargetPos - firePos;
-      aimDir.Normalize();
-
-   } else { //no valid aimAtEnt entity!
-      if ( IsType( idPlayer::Type ) ) { //player - view
-         static_cast<idPlayer *>( this )->viewAngles.ToVectors( &aimDir, NULL, NULL ); 
-      } else if ( IsType( idActor::Type ) ) { //AI - axis
-         aimDir = static_cast<idActor *>( this )->viewAxis[ 0 ]; 
-      } else {
-         aimDir = GetPhysics()->GetAxis()[ 0 ];
-      }
-   }
-}
 
 /*
 ================
@@ -623,15 +541,7 @@ void idEntity::Spawn( void ) {
 		}
 	}
 
-// sikk---> Doom/Custom Health Values
-	if ( g_enemyHealthType.GetInteger() == 1 && spawnArgs.GetInt( "health_doom" ) ) {
-		health = spawnArgs.GetInt( "health_doom" );
-	} else if ( g_enemyHealthType.GetInteger() == 2 && spawnArgs.GetInt( "health_custom" ) ) {
-		health = spawnArgs.GetInt( "health_custom" );
-	} else {
-		health = spawnArgs.GetInt( "health" );
-	}
-// <---sikk
+	health = spawnArgs.GetInt( "health" );
 
 	InitDefaultPhysics( origin, axis );
 
@@ -953,7 +863,8 @@ bool idEntity::DoDormantTests( void ) {
 			return false;
 		}
 		return true;
-	} else {
+	}
+
 	// the monster area is topologically connected to a player, but if
 	// the monster hasn't been woken up before, do the more precise PVS check
 	if ( !fl.hasAwakened ) {
@@ -965,10 +876,8 @@ bool idEntity::DoDormantTests( void ) {
 	// wake up
 	dormantStart = 0;
 	fl.hasAwakened = true;		// only go dormant when area closed off now, not just out of PVS
-	return false;
-}
 
-//	return false;	// sikk - warning C4702: unreachable code
+	return false;
 }
 
 /*
@@ -1688,7 +1597,7 @@ bool idEntity::StartSoundShader( const idSoundShader *shader, const s_channelTyp
 
 		msg.Init( msgBuf, sizeof( msgBuf ) );
 		msg.BeginWriting();
-		msg.WriteInt( gameLocal.ServerRemapDecl( -1, DECL_SOUND, shader->Index() ) ); //idBitMsg::WriteLong replaced by idBitMsg::WriteInt
+		msg.WriteInt( gameLocal.ServerRemapDecl( -1, DECL_SOUND, shader->Index() ) );
 		msg.WriteByte( channel );
 		ServerSendEvent( EVENT_STARTSOUNDSHADER, &msg, false, -1 );
 	}
@@ -2629,7 +2538,6 @@ idEntity::RunPhysics
 bool idEntity::RunPhysics( void ) {
 	int			i, reachedTime, startTime, endTime;
 	idEntity *	part, *blockedPart, *blockingEntity;
-	trace_t		results;
 	bool		moved;
 
 	// don't run physics if not enabled
@@ -2650,7 +2558,7 @@ bool idEntity::RunPhysics( void ) {
 	endTime = gameLocal.time;
 
 	gameLocal.push.InitSavingPushedEntityPositions();
-	blockedPart = blockingEntity = NULL;	// sikk - warning C4701: potentially uninitialized local variable used
+	blockedPart = NULL;
 
 	// save the physics state of the whole team and disable the team for collision detection
 	for ( part = this; part != NULL; part = part->teamChain ) {
@@ -2972,9 +2880,9 @@ explosions and melee attacks.
 ============
 */
 bool idEntity::CanDamage( const idVec3 &origin, idVec3 &damagePoint ) const {
-	idVec3 	dest;
+	idVec3	dest;
 	trace_t	tr;
-	idVec3 	midpoint;
+	idVec3	midpoint;
 
 	// use the midpoint of the bounds instead of the origin, because
 	// bmodels may have their origin at 0,0,0
@@ -3090,16 +2998,7 @@ void idEntity::Damage( idEntity *inflictor, idEntity *attacker, const idVec3 &di
 		gameLocal.Error( "Unknown damageDef '%s'\n", damageDefName );
 	}
 
-// sikk---> Damage Type
-	int	damage;
-	if ( g_damageType.GetInteger() == 1 && damageDef->GetInt( "damage_doom_scale" ) ) {
-		damage = damageDef->GetInt( "damage_doom_scale" ) * ( gameLocal.random.RandomInt( 255 ) % damageDef->GetInt( "damage_doom_range" ) + 1 );
-	} else if ( g_damageType.GetInteger() == 2 && damageDef->GetInt( "damage_custom" ) ) {
-		damage = damageDef->GetInt( "damage_custom" );
-	} else {
-		damage = damageDef->GetInt( "damage" );
-	}
-// <---sikk
+	int	damage = damageDef->GetInt( "damage" );
 
 	// inform the attacker that they hit someone
 	attacker->DamageFeedback( this, inflictor, damage );
@@ -4672,36 +4571,6 @@ void idEntity::Event_SetNeverDormant( int enable ) {
 	dormantStart = 0;
 }
 
-/*
-================
-idEntity::Event_FireProjectile PD3
-================
-*/
-void idEntity::Event_FireProjectile( const char* projDefName , const idVec3 &firePos, const idAngles &fireAng ) {
-   idProjectile   *proj;
-   idVec3   dir;
-
-   dir = fireAng.ToForward();
-   proj = CommonFireProjectile( projDefName , firePos, dir );
-
-   idThread::ReturnEntity( proj );
-}
-
-/*
-================
-idEntity::Event_FireProjAtTarget PD3
-================
-*/
-void idEntity::Event_FireProjAtTarget( const char* projDefName , const idVec3 &firePos, idEntity* aimAtEnt) {
-   idProjectile   *proj;
-   idVec3         dir;
-
-   CommonGetAimDir( firePos, aimAtEnt, dir );
-   proj = CommonFireProjectile( projDefName , firePos, dir );
-
-   idThread::ReturnEntity( proj );
-}
-
 /***********************************************************************
 
    Network
@@ -4984,11 +4853,11 @@ bool idEntity::ClientReceiveEvent( int event, int time, const idBitMsg &msg ) {
 			StopSound( channel, false );
 			return true;
 		}
-		default: {
-			return false;
-		}
+		default:
+			break;
 	}
-//	return false;	// sikk - warning C4702: unreachable code
+
+	return false;
 }
 
 /*
@@ -5006,8 +4875,6 @@ const idEventDef EV_SetJointPos( "setJointPos", "ddv" );
 const idEventDef EV_SetJointAngle( "setJointAngle", "ddv" );
 const idEventDef EV_GetJointPos( "getJointPos", "d", 'v' );
 const idEventDef EV_GetJointAngle( "getJointAngle", "d", 'v' );
-const idEventDef EV_FireProjectileFromJoint( "fireProjectileFromJoint", "sdv", 'e' );  // PD3
-const idEventDef EV_FireProjAtTargetFromJoint( "fireProjAtTargetFromJoint", "sdE", 'e' ); // PD3
 
 CLASS_DECLARATION( idEntity, idAnimatedEntity )
 	EVENT( EV_GetJointHandle,		idAnimatedEntity::Event_GetJointHandle )
@@ -5017,8 +4884,6 @@ CLASS_DECLARATION( idEntity, idAnimatedEntity )
 	EVENT( EV_SetJointAngle,		idAnimatedEntity::Event_SetJointAngle )
 	EVENT( EV_GetJointPos,			idAnimatedEntity::Event_GetJointPos )
 	EVENT( EV_GetJointAngle,		idAnimatedEntity::Event_GetJointAngle )
-	EVENT( EV_FireProjectileFromJoint,      idAnimatedEntity::Event_FireProjectileFromJoint ) // PD3
-	EVENT( EV_FireProjAtTargetFromJoint,   idAnimatedEntity::Event_FireProjAtTargetFromJoint ) // PD3
 END_CLASS
 
 /*
@@ -5431,11 +5296,11 @@ bool idAnimatedEntity::ClientReceiveEvent( int event, int time, const idBitMsg &
 			AddLocalDamageEffect( jointNum, localOrigin, localNormal, localDir, damageDef, collisionMaterial );
 			return true;
 		}
-		default: {
-			return idEntity::ClientReceiveEvent( event, time, msg );
-		}
+		default:
+			break;
 	}
-//	return false;	// sikk - warning C4702: unreachable code
+
+	return idEntity::ClientReceiveEvent( event, time, msg );
 }
 
 /*
@@ -5535,46 +5400,4 @@ void idAnimatedEntity::Event_GetJointAngle( jointHandle_t jointnum ) {
 	idAngles ang = axis.ToAngles();
 	idVec3 vec( ang[ 0 ], ang[ 1 ], ang[ 2 ] );
 	idThread::ReturnVector( vec );
-}
-
-/*
-================
-idAnimatedEntity::Event_FireProjectileFromJoint // PD3
-================
-*/
-void idAnimatedEntity::Event_FireProjectileFromJoint( const char *projDefName, jointHandle_t jointnum, const idAngles &fireAng ) {
-   idProjectile   *proj;
-   idVec3         dir;
-   idVec3         firePos;
-   idMat3         axis; //useless but needed
-
-   if ( !GetJointWorldTransform( jointnum, gameLocal.time, firePos, axis ) ) {
-      gameLocal.Warning( "Joint # %d out of range on entity '%s'",  jointnum, name.c_str() );
-   }
-
-   dir = fireAng.ToForward();
-   proj = CommonFireProjectile( projDefName , firePos, dir );
-
-   idThread::ReturnEntity( proj );
-}
-
-/*
-================
-idAnimatedEntity::Event_FireProjAtTargetFromJoint // PD3
-================
-*/
-void idAnimatedEntity::Event_FireProjAtTargetFromJoint( const char *projDefName, jointHandle_t jointnum, idEntity *aimAtEnt ) {
-   idProjectile   *proj;
-   idVec3         dir;
-   idVec3         firePos;
-   idMat3         axis; //useless but needed
-
-   if ( !GetJointWorldTransform( jointnum, gameLocal.time, firePos, axis ) ) {
-      gameLocal.Warning( "Joint # %d out of range on entity '%s'",  jointnum, name.c_str() );
-   }
-
-   CommonGetAimDir( firePos, aimAtEnt, dir );
-   proj = CommonFireProjectile( projDefName , firePos, dir );
-
-   idThread::ReturnEntity( proj );
 }

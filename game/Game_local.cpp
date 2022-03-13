@@ -1470,7 +1470,7 @@ bool idGameLocal::InitFromSaveGame( const char *mapName, idRenderWorld *renderWo
 	savegame.ReadBool( influenceActive );
 	savegame.ReadInt( nextGibTime );
 
-sikk---> Portal Sky Box
+// sikk---> Portal Sky Box
 	portalSkyEnt.Restore( &savegame );
 	savegame.ReadBool( portalSkyActive );
 // <---sikk
@@ -3295,8 +3295,8 @@ bool idGameLocal::InhibitEntitySpawn( idDict &spawnArgs ) {
 			}
 // <---sikk
 		}
-		}
-#endif
+	}
+
 
 // sikk---> Item Management: Random Item Removal
 	if ( spawnArgs.GetBool( "removeable" ) && !idStr::Icmp( spawnArgs.GetString( "target" ), "" ) &&

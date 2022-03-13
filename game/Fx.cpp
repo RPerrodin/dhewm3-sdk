@@ -48,7 +48,7 @@ const idEventDef EV_Fx_KillFx( "_killfx" );
 const idEventDef EV_Fx_Action( "_fxAction", "e" );		// implemented by subclasses
 
 CLASS_DECLARATION( idEntity, idEntityFx )
-EVENT( EV_Activate,	   	idEntityFx::Event_Trigger )
+EVENT( EV_Activate,		idEntityFx::Event_Trigger )
 EVENT( EV_Fx_KillFx,	idEntityFx::Event_ClearFx )
 END_CLASS
 
@@ -509,9 +509,6 @@ void idEntityFx::Run( int time ) {
 					useAction->renderEntity.shaderParms[ SHADERPARM_TIMEOFFSET ] = -MS2SEC( time );
 					useAction->renderEntity.shaderParms[3] = 1.0f;
 					useAction->renderEntity.shaderParms[5] = 0.0f;
-
-					useAction->renderEntity.suppressSurfaceInViewID = -8;	// sikk - depth render
-
 					if ( useAction->renderEntity.hModel ) {
 						useAction->renderEntity.bounds = useAction->renderEntity.hModel->Bounds( &useAction->renderEntity );
 					}
@@ -596,9 +593,6 @@ void idEntityFx::Spawn( void ) {
 			PostEventMS( &EV_Activate, 0, this );
 		}
 	}
-
-		// We don't want particles in depth render.
-	renderEntity.suppressSurfaceInViewID = -8;	// sikk - Depth Render
 }
 
 /*
@@ -795,9 +789,6 @@ idTeleporter::Event_DoAction
 ================
 */
 void idTeleporter::Event_DoAction( idEntity *activator ) {
-		float angle;
-
-	angle = spawnArgs.GetFloat( "angle" );
 	idAngles a( 0, spawnArgs.GetFloat( "angle" ), 0 );
 	activator->Teleport( GetPhysics()->GetOrigin(), a, NULL );
 }

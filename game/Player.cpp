@@ -457,7 +457,6 @@ void idInventory::RestoreInventory( idPlayer *owner, const idDict &dict ) {
 	}
 // doomtrinity-dual weapon-<
 
-#endif
 
 	num = dict.GetInt( "levelTriggers" );
 	for ( i = 0; i < num; i++ ) {

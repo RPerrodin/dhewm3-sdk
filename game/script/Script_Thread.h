@@ -89,8 +89,8 @@ private:
 
 	idDict						spawnArgs;
 
-	int 						threadNum;
-	idStr 						threadName;
+	int							threadNum;
+	idStr						threadName;
 
 	int							lastExecuteTime;
 	int							creationTime;
@@ -135,10 +135,10 @@ private:
 	void						Event_SpawnFloat( const char *key, float defaultvalue );
 	void						Event_SpawnVector( const char *key, idVec3 &defaultvalue );
 	void						Event_ClearPersistantArgs( void );
-	void 						Event_SetPersistantArg( const char *key, const char *value );
-	void 						Event_GetPersistantString( const char *key );
-	void 						Event_GetPersistantFloat( const char *key );
-	void 						Event_GetPersistantVector( const char *key );
+	void						Event_SetPersistantArg( const char *key, const char *value );
+	void						Event_GetPersistantString( const char *key );
+	void						Event_GetPersistantFloat( const char *key );
+	void						Event_GetPersistantVector( const char *key );
 	void						Event_AngToForward( idAngles &ang );
 	void						Event_AngToRight( idAngles &ang );
 	void						Event_AngToUp( idAngles &ang );
@@ -150,10 +150,6 @@ private:
 	void						Event_VecDotProduct( idVec3 &vec1, idVec3 &vec2 );
 	void						Event_VecCrossProduct( idVec3 &vec1, idVec3 &vec2 );
 	void						Event_VecToAngles( idVec3 &vec );
-
-	void						Event_VecToOrthoBasisAngles( idVec3 &vec ); // PD3
-	void						Event_RotateVector( idVec3 &vec, idVec3 &ang ); // PD3
-
 	void						Event_OnSignal( int signal, idEntity *ent, const char *func );
 	void						Event_ClearSignalThread( int signal, idEntity *ent );
 	void						Event_SetCamera( idEntity *ent );
@@ -173,17 +169,17 @@ private:
 	void						Event_StartMusic( const char *name );
 	void						Event_Warning( const char *text );
 	void						Event_Error( const char *text );
-	void 						Event_StrLen( const char *string );
-	void 						Event_StrLeft( const char *string, int num );
-	void 						Event_StrRight( const char *string, int num );
-	void 						Event_StrSkip( const char *string, int num );
-	void 						Event_StrMid( const char *string, int start, int num );
+	void						Event_StrLen( const char *string );
+	void						Event_StrLeft( const char *string, int num );
+	void						Event_StrRight( const char *string, int num );
+	void						Event_StrSkip( const char *string, int num );
+	void						Event_StrMid( const char *string, int start, int num );
 	void						Event_StrToFloat( const char *string );
 	void						Event_RadiusDamage( const idVec3 &origin, idEntity *inflictor, idEntity *attacker, idEntity *ignore, const char *damageDefName, float dmgPower );
 	void						Event_IsClient( void );
-	void 						Event_IsMultiplayer( void );
-	void 						Event_GetFrameTime( void );
-	void 						Event_GetTicsPerSecond( void );
+	void						Event_IsMultiplayer( void );
+	void						Event_GetFrameTime( void );
+	void						Event_GetTicsPerSecond( void );
 	void						Event_CacheSoundShader( const char *soundName );
 	void						Event_DebugLine( const idVec3 &color, const idVec3 &start, const idVec3 &end, const float lifetime );
 	void						Event_DebugArrow( const idVec3 &color, const idVec3 &start, const idVec3 &end, const int size, const float lifetime );
@@ -252,7 +248,7 @@ public:
 	bool						Start( void );
 	idThread					*WaitingOnThread( void );
 	void						SetThreadNum( int num );
-	int 						GetThreadNum( void );
+	int							GetThreadNum( void );
 	void						SetThreadName( const char *name );
 	const char					*GetThreadName( void );
 

@@ -5,6 +5,8 @@
 
 #include "Game_local.h"
 
+#include "physics/Force_Grab.h"
+
 /*
 ===============================================================================
 
@@ -14,7 +16,7 @@
 ===============================================================================
 */
 
-class idEntity;
+//class idEntity;
 
 class idGrabEntity : public idEntity {
 public:

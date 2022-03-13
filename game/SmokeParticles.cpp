@@ -81,8 +81,6 @@ void idSmokeParticles::Init( void ) {
 	renderEntity.hModel = renderModelManager->AllocModel();
 	renderEntity.hModel->InitEmpty( smokeParticle_SnapshotName );
 
-	renderEntity.suppressSurfaceInViewID = -8;	// sikk - Depth Render
-
 	// we certainly don't want particle shadows
 	renderEntity.noShadow = 1;
 
@@ -166,7 +164,7 @@ Called by game code to drop another particle into the list
 ================
 */
 bool idSmokeParticles::EmitSmoke( const idDeclParticle *smoke, const int systemStartTime, const float diversity, const idVec3 &origin, const idMat3 &axis ) {
-	bool continues = false;
+	bool	continues = false;
 
 	if ( !smoke ) {
 		return false;
@@ -205,11 +203,11 @@ bool idSmokeParticles::EmitSmoke( const idDeclParticle *smoke, const int systemS
 		}
 
 		// see how many particles we should emit this tic
-		// FIXME:	smoke.privateStartTime += stage->timeOffset;
-		int finalParticleTime = stage->cycleMsec * stage->spawnBunching;
-		int deltaMsec = gameLocal.time - systemStartTime;
+		// FIXME:			smoke.privateStartTime += stage->timeOffset;
+		int		finalParticleTime = stage->cycleMsec * stage->spawnBunching;
+		int		deltaMsec = gameLocal.time - systemStartTime;
 
-		int nowCount = 0, prevCount = 0;	// sikk - potentially unitialized local variable used
+		int		nowCount, prevCount;
 		if ( finalParticleTime == 0 ) {
 			// if spawnBunching is 0, they will all come out at once
 			if ( gameLocal.time == systemStartTime ) {
@@ -240,7 +238,7 @@ bool idSmokeParticles::EmitSmoke( const idDeclParticle *smoke, const int systemS
 		}
 
 		// find an activeSmokeStage that matches this
-		activeSmokeStage_t *active = NULL;	// sikk - potentially unitialized local variable used
+		activeSmokeStage_t	*active = NULL;
 		int i;
 		for ( i = 0 ; i < activeStages.Num() ; i++ ) {
 			active = &activeStages[i];
@@ -264,7 +262,7 @@ bool idSmokeParticles::EmitSmoke( const idDeclParticle *smoke, const int systemS
 				gameLocal.Printf( "idSmokeParticles::EmitSmoke: no free smokes with %d active stages\n", activeStages.Num() );
 				return true;
 			}
-			singleSmoke_t *newSmoke = freeSmokes;
+			singleSmoke_t	*newSmoke = freeSmokes;
 			freeSmokes = freeSmokes->next;
 			numActiveSmokes++;
 

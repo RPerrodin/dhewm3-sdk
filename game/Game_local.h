@@ -46,7 +46,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "Pvs.h"
 #include "MultiplayerGame.h"
 
-#include "Grab.h"	// sikk - Object Manipulation
+// #include "Grab.h"	// sikk - Object Manipulation
 
 
 #ifdef ID_DEBUG_UNINITIALIZED_MEMORY
@@ -201,7 +201,7 @@ private:
 template< class type >
 class idEntityPtr {
 public:
-							idEntityPtr();
+	idEntityPtr();
 
 	// save games
 	void					Save( idSaveGame *savefile ) const;					// archives object for save game file
