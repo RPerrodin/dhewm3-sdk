@@ -1192,7 +1192,7 @@ void idAI::Think( void ) {
 
 // sikk---> Random Encounters System
 	if ( isRandom && ( AI_DEST_UNREACHABLE || ( dormantTime && gameLocal.time > ( dormantTime + g_randomEncountersDormantTime.GetInteger() * 1000 ) ) ) ) 
-		Damage( gameLocal.world, gameLocal.world, idVec3( 0, 0, 1 ), "damage_moverCrush", 999999, INVALID_JOINT );
+		Damage( NULL, NULL, idVec3( 0, 0, 1 ), "damage_moverCrush", 999999, INVALID_JOINT );
 // <---sikk
 }
 
