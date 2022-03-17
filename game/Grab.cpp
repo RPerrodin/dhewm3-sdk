@@ -1,10 +1,15 @@
 // sikk---> Object Manipulation
 
 // #include "../idlib/precompiled.h"
-#pragma hdrstop
+// #pragma hdrstop
 
-#include "Game_local.h"
-#include "Misc.h"
+// #include "Game_local.h"
+// #include "Misc.h"
+
+#include "game/Player.h"
+#include "game/gamesys/SysCvar.h"
+
+#include "game/Grab.h"
 
 #define MAX_DRAG_TRACE_DISTANCE			80.0f
 #define TRACE_BOUNDS_SIZE				3.0f

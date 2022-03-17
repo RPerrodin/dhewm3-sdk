@@ -1,9 +1,15 @@
 // sikk---> Object Manipulation
 
-#include "../../idlib/precompiled.h"
-#pragma hdrstop
+// #include "../../idlib/precompiled.h"
+// #pragma hdrstop
 
-#include "../Game_local.h"
+#include "sys/platform.h"
+#include "framework/UsercmdGen.h"
+#include "game/gamesys/SaveGame.h"
+
+#include "game/physics/Physics.h"
+
+#include "game/physics/Force_Grab.h"
 
 CLASS_DECLARATION( idForce, idForce_Grab )
 END_CLASS

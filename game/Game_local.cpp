@@ -254,14 +254,6 @@ void idGameLocal::Clear( void ) {
 	savedEventQueue.Init();
 
 	memset( lagometer, 0, sizeof( lagometer ) );
-	
-// sikk---> Portal Sky Box
-	portalSkyEnt		= NULL;
-	portalSkyActive		= false;
-// <---sikk
-
-	currentLights.Clear();	// sikk - Soft Shadows PostProcess
-
 // sikk---> Random Encounters System
 	randomEnemyListNum	= 0;
 	randomEnemyTime		= 0;
@@ -592,11 +584,6 @@ void idGameLocal::SaveGame( idFile *f ) {
 	// gamestate
 	savegame.WriteBool( influenceActive );
 	savegame.WriteInt( nextGibTime );
-
-// sikk---> Portal Sky Box
-	portalSkyEnt.Save( &savegame );
-	savegame.WriteBool( portalSkyActive );
-// <---sikk
 
 // sikk---> Random Encounters System
 	savegame.WriteInt( randomEnemyTally );
@@ -963,13 +950,6 @@ void idGameLocal::LoadMap( const char *mapName, int randseed ) {
 	pvs.Init();
 	playerPVS.i = -1;
 	playerConnectedAreas.i = -1;
-
-	currentLights.Clear();	// sikk - Soft Shadows PostProcess
-
-// sikk---> Portal Sky Box
-	portalSkyEnt		= NULL;
-	portalSkyActive		= false;
-// <---sikk
 
 // sikk---> Random Encounters System
 	randomEnemyListNum	= 0;
@@ -1469,11 +1449,6 @@ bool idGameLocal::InitFromSaveGame( const char *mapName, idRenderWorld *renderWo
 
 	savegame.ReadBool( influenceActive );
 	savegame.ReadInt( nextGibTime );
-
-// sikk---> Portal Sky Box
-	portalSkyEnt.Restore( &savegame );
-	savegame.ReadBool( portalSkyActive );
-// <---sikk
 
 // sikk---> Random Encounters System
 	savegame.ReadInt( randomEnemyTally );
@@ -2096,26 +2071,6 @@ void idGameLocal::SetupPlayerPVS( void ) {
 			pvs.FreeCurrentPVS( otherPVS );
 			playerConnectedAreas = newPVS;
 		}
-		
-// sikk---> Portal Sky Box
-		// if portalSky is preset, then merge into pvs so we get rotating brushes, etc
-		if ( portalSkyEnt.GetEntity() ) {
-			idEntity *skyEnt = portalSkyEnt.GetEntity();
-
-			otherPVS = pvs.SetupCurrentPVS( skyEnt->GetPVSAreas(), skyEnt->GetNumPVSAreas() );
-			newPVS = pvs.MergeCurrentPVS( playerPVS, otherPVS );
-			pvs.FreeCurrentPVS( playerPVS );
-			pvs.FreeCurrentPVS( otherPVS );
-			playerPVS = newPVS;
-
-			otherPVS = pvs.SetupCurrentPVS( skyEnt->GetPVSAreas(), skyEnt->GetNumPVSAreas() );
-			newPVS = pvs.MergeCurrentPVS( playerConnectedAreas, otherPVS );
-			pvs.FreeCurrentPVS( playerConnectedAreas );
-			pvs.FreeCurrentPVS( otherPVS );
-			playerConnectedAreas = newPVS;
-		}
-// <---sikk
-
 	}
 }
 
@@ -3297,7 +3252,6 @@ bool idGameLocal::InhibitEntitySpawn( idDict &spawnArgs ) {
 		}
 	}
 
-
 // sikk---> Item Management: Random Item Removal
 	if ( spawnArgs.GetBool( "removeable" ) && !idStr::Icmp( spawnArgs.GetString( "target" ), "" ) &&
 		 ( gameLocal.random.RandomFloat() * 0.99999f ) < g_itemRemovalFactor.GetFloat() ) {
@@ -3736,13 +3690,6 @@ void idGameLocal::RadiusDamage( const idVec3 &origin, idEntity *inflictor, idEnt
 		radius = 1;
 	}
 
-// sikk---> Explosion FX PostProcess
-	explosionOrigin = origin;
-	explosionRadius = radius;
-	explosionDamage = damage;
-	explosionTime = time + g_explosionFXTime.GetInteger() * 1000;
-// <---sikk
-
 	bounds = idBounds( origin ).Expand( radius );
 
 	// get all entities touching the bounds
@@ -3779,13 +3726,6 @@ void idGameLocal::RadiusDamage( const idVec3 &origin, idEntity *inflictor, idEnt
 		if ( isMultiplayer && ent->entityNumber < MAX_CLIENTS && ent->IsType( idPlayer::Type ) && static_cast< idPlayer * >( ent )->health < 0 ) {
 			continue;
 		}
-
-// sikk---> Cyberdemon Damage Type
-		if ( !idStr::Icmp( ent->GetClassname(), "monster_boss_cyberdemon" ) && !static_cast< idActor * >( ent )->GetFinalBoss() ) {
-			continue;
-		}
-// <---sikk
-
 
 		// find the distance from the edge of the bounding box
 		for ( i = 0; i < 3; i++ ) {

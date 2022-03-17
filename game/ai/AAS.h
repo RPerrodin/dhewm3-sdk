@@ -141,6 +141,6 @@ public:
 
 								// Returns the number of areas in the current aas file.
 	virtual int					GetNumAreas( int aasNum ) const = 0;	// sikk - Random Encounters System
-};
+	};
 
 #endif /* !__AAS_H__ */

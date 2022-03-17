@@ -39,9 +39,6 @@ If you have questions concerning this license or the applicable additional terms
 #include "PlayerIcon.h"
 #include "GameEdit.h"
 
-#include "Grab.h"
-#include "Moveable.h"
-
 class idAI;
 
 /*
@@ -129,8 +126,6 @@ class idInventory {
 public:
 	int						maxHealth;
 	int						weapons;
-	int					shotgunDoubleInInventory;	// doomtrinity-dual weapon
-	int					pistolInInventory;	// doomtrinity-dual weapon
 	int						powerups;
 	int						armor;
 	int						maxarmor;
@@ -190,7 +185,7 @@ public:
 
 	int						HasAmmo( ammo_t type, int amount );
 	bool					UseAmmo( ammo_t type, int amount );
-	int						HasAmmo( const char *weapon_classname, bool includeClip = false, idPlayer* owner = NULL );			// looks up the ammo information for the weapon class first		// doomtrinity (D3XP)
+	int						HasAmmo( const char *weapon_classname );			// looks up the ammo information for the weapon class first
 
 	void					UpdateArmor( void );
 
@@ -199,9 +194,6 @@ public:
 	int						onePickupTime;
 	idList<idItemInfo>		pickupItemNames;
 	idList<idObjectiveInfo>	objectiveNames;
-	
-	int						healthPackAmount;	// sikk - Health Management System (Health Pack)
-	int						adrenalineAmount;	// sikk - Adrenaline Pack System
 };
 
 typedef struct {
@@ -276,14 +268,7 @@ public:
 	int						weapon_soulcube;
 	int						weapon_pda;
 	int						weapon_fists;
-//doomtrinity ->
-	int						weapon_pistol;
-	int						weapon_shotgun;
-	int						weapon_superShotgun;
-	int						weapon_machinegun;
-	int						weapon_plasmagun;
-	int						weapon_rocketlauncher;
-//<- doomtrinity
+
 	int						heartRate;
 	idInterpolate<float>	heartInfo;
 	int						lastHeartAdjust;
@@ -298,6 +283,7 @@ public:
 	bool					healthPulse;
 	bool					healthTake;
 	int						nextHealthTake;
+
 
 	bool					hiddenWeapon;		// if the weapon is hidden ( in noWeapons maps )
 	idEntityPtr<idProjectile> soulCubeProjectile;
@@ -338,7 +324,6 @@ public:
 	// if a third person view is used
 	idVec3					firstPersonViewOrigin;
 	idMat3					firstPersonViewAxis;
-	idMat3					firstPersonViewWeaponAxis;		// doomtrinity-headanim
 
 	idDragEntity			dragEntity;
 
@@ -418,7 +403,6 @@ public:
 	void					CalculateViewWeaponPos( idVec3 &origin, idMat3 &axis );
 	idVec3					GetEyePosition( void ) const;
 	void					GetViewPos( idVec3 &origin, idMat3 &axis ) const;
-	void					GetViewWeaponAxis( idMat3 &axis ) const;		// doomtrinity-headanim
 	void					OffsetThirdPersonView( float angle, float range, float height, bool clip );
 
 	bool					Give( const char *statname, const char *value );
@@ -540,87 +524,6 @@ public:
 	bool					SelfSmooth( void );
 	void					SetSelfSmooth( bool b );
 
-	int						nScreenFrostAlpha;	// sikk - Screen Frost
-
-	int						nShowHudTimer;		// sikk - Dynamic hud system - Used to say when to show the hud as well as fade it in/out (just for health/armor/ammo/weapon changes)
-
-// sikk---> Manual Item Pickup
-	idItem*					focusItem;
-	int						itemPickupTime;
-// <---sikk
-
-// sikk---> Searchable Corpses
-	void					SearchCorpse( idAFEntity_Gibbable* corpse );
-	idAFEntity_Gibbable*	focusCorpse;
-	int						searchTimer;
-// <---sikk
-
-// sikk---> Object Manipulation
-	idGrabEntity			grabEntity;
-	idEntity*				focusMoveable;
-	int						focusMoveableId;
-	int						focusMoveableTimer;
-// <---sikk
-
-// sikk---> Adrenaline Pack System
-	void					UseAdrenaline( void );
-	int						adrenalineAmount;
-// <---sikk
-
-// sikk---> Health Management System
-	void					UseHealthPack( void );
-	int						healthPackAmount;
-	int						healthPackTimer;
-	int						nextHealthRegen;
-	int						prevHeatlh;			// sikk - holds player health after Health station has been used
-// <---sikk
-
-// sikk---> Crosshair Positioning
-	int						GetCurrentWeapon( void ) { return currentWeapon; };
-	idVec3					v3CrosshairPos;
-// <---sikk
-
-// sikk---> Weapon Management: Awareness
-	bool					GetWeaponAwareness( void );
-	bool					bWATrace;
-	bool					bWAIsSprinting;
-	bool					bWAUseHideDist;
-	float					fSpreadModifier;
-	idEntity*				entChainsawed;
-// <---sikk
-
-// sikk---> Depth Render
-	void					ToggleSuppression( bool bSuppress );
-	bool					bViewModelsModified;
-// <---sikk
-
-// sikk---> Depth of Field PostProcess
-	int						GetTalkCursor( void ) { return talkCursor; };	// used to check if character has focus
-	bool					bIsZoomed;
-	float					focusDistance;
-// <---sikk
-
-// sikk---> Global Ambient Light
-	void					ToggleAmbientLight( bool bOn );
-	bool					bAmbientLightOn;
-	idStr					szAmbientLightColor;
-	idStr					szAmbientLightRadius;
-// <---sikk
-
-// sikk---> Infrared Goggles/Headlight Mod
-	void					UpdateBattery( void );
-	void					ToggleIRGoggles( void );
-	void					ToggleHeadlight( void );
-
-	bool					bIRGogglesOn;
-	bool					bHeadlightOn;
-	int						nIRGogglesTime;
-	int						nHeadlightTime;
-	int						nBattery;
-	float					fIntensity;
-	float					fIRBloomParms[ 7 ];
-// <---sikk
-
 private:
 	jointHandle_t			hipJoint;
 	jointHandle_t			chestJoint;
@@ -671,10 +574,7 @@ private:
 	idInterpolate<float>	zoomFov;
 	idInterpolate<float>	centerView;
 	bool					fxFov;
-//doomtrinity ->
-	float					init_mSensitivity;
-	int						init_mSmooth;
-//<- doomtrinity
+
 	float					influenceFov;
 	int						influenceActive;		// level of influence.. 1 == no gun or hud .. 2 == 1 + no movement
 	idEntity *				influenceEntity;
@@ -775,7 +675,7 @@ private:
 	void					ExtractEmailInfo( const idStr &email, const char *scan, idStr &out );
 	void					UpdateObjectiveInfo( void );
 
-	void					UseVehicle( bool drive );	// sikk - function modified to support use function
+	void					UseVehicle( void );
 
 	void					Event_GetButtons( void );
 	void					Event_GetMove( void );
@@ -795,9 +695,6 @@ private:
 	void					Event_LevelTrigger( void );
 	void					Event_Gibbed( void );
 	void					Event_GetIdealWeapon( void );
-	// doomtrinity-dual weapon
-	void					Event_GetNumPistols( void );
-	void					Event_GetNumShotguns( void );
 };
 
 ID_INLINE bool idPlayer::IsReady( void ) {
@@ -833,4 +730,3 @@ ID_INLINE void idPlayer::SetSelfSmooth( bool b ) {
 }
 
 #endif /* !__GAME_PLAYER_H__ */
-
