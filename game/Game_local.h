@@ -29,6 +29,7 @@ If you have questions concerning this license or the applicable additional terms
 #ifndef __GAME_LOCAL_H__
 #define	__GAME_LOCAL_H__
 
+//#include "physics/Force_Grab.h"	// sikk - Object Manipulation
 #include "GameBase.h"
 
 #include "idlib/containers/StrList.h"
@@ -44,6 +45,9 @@ If you have questions concerning this license or the applicable additional terms
 #include "anim/Anim.h"
 #include "Pvs.h"
 #include "MultiplayerGame.h"
+
+//#include "Grab.h"	// sikk - Object Manipulation
+
 
 #ifdef ID_DEBUG_UNINITIALIZED_MEMORY
 // This is real evil but allows the code to inspect arbitrary class variables.

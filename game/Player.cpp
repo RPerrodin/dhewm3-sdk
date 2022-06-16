@@ -903,10 +903,18 @@ int idInventory::HasAmmo( ammo_t type, int amount ) {
 idInventory::HasAmmo
 ===============
 */
-int idInventory::HasAmmo( const char *weapon_classname ) {
+int idInventory::HasAmmo( const char *weapon_classname, bool includeClip, idPlayer* owner ) {// doomtrinity (D3XP)
 	int ammoRequired;
 	ammo_t ammo_i = AmmoIndexForWeaponClass( weapon_classname, &ammoRequired );
-	return HasAmmo( ammo_i, ammoRequired );
+//doomtrinity ->	//From D3XP
+	int ammoCount = HasAmmo( ammo_i, ammoRequired );
+	if(includeClip && owner) {
+		ammoCount += clip[owner->SlotForWeapon(weapon_classname)];
+	}
+	return ammoCount;
+	
+	//return HasAmmo( ammo_i, ammoRequired );
+//<- doomtrinity
 }
 
 /*
@@ -5513,28 +5521,16 @@ void idPlayer::SetClipModel( void ) {
 
 /*
 ==============
-idPlayer::UseVehicle
+idPlayer::UseVehicle // Changed in PD3 but why ?
 ==============
 */
-void idPlayer::UseVehicle( void ) {
-	trace_t	trace;
-	idVec3 start, end;
-	idEntity *ent;
-
-	if ( GetBindMaster() && GetBindMaster()->IsType( idAFEntity_Vehicle::Type ) ) {
-		Show();
-		static_cast<idAFEntity_Vehicle*>(GetBindMaster())->Use( this );
+void idPlayer::UseVehicle( bool drive ) {
+	if ( drive ) {
+		Hide();
+		focusVehicle->Use( this );
 	} else {
-		start = GetEyePosition();
-		end = start + viewAngles.ToForward() * 80.0f;
-		gameLocal.clip.TracePoint( trace, start, end, MASK_SHOT_RENDERMODEL, this );
-		if ( trace.fraction < 1.0f ) {
-			ent = gameLocal.entities[ trace.c.entityNum ];
-			if ( ent && ent->IsType( idAFEntity_Vehicle::Type ) ) {
-				Hide();
-				static_cast<idAFEntity_Vehicle*>(ent)->Use( this );
-			}
-		}
+		Show();
+		static_cast<idAFEntity_Vehicle*>( GetBindMaster() )->Use( this );
 	}
 }
 
@@ -5621,9 +5617,36 @@ void idPlayer::PerformImpulse( int impulse ) {
 			break;
 		}
 		case IMPULSE_40: {
-			UseVehicle();
+			bool valid = false;
+			if ( grabEntity.GetGrabEntity() ) {
+				grabEntity.StopDrag( this, true );
+				valid = true;
+			} else {
+				if ( GetBindMaster() && GetBindMaster()->IsType( idAFEntity_Vehicle::Type ) ) {
+					UseVehicle( false );
+					valid = true;
+				} else if ( focusVehicle ) {
+					UseVehicle( true );
+					valid = true;
+				} else if ( focusItem ) {
+					if ( !focusItem->Pickup( this ) && grabEntity.GetThrownTime() < gameLocal.time )
+						grabEntity.StartDrag( this, focusItem, focusMoveableId );
+					valid = true;
+				} else if ( focusCorpse ) {
+					SearchCorpse( focusCorpse );
+					valid = true;
+				} else if ( focusMoveable && grabEntity.GetThrownTime() < gameLocal.time ) {
+					grabEntity.StartDrag( this, focusMoveable, focusMoveableId );
+					valid = true;
+				}
+			}
+			
+			if ( !valid )
+				StartSoundShader( declManager->FindSound( "use_fail" ), SND_CHANNEL_VOICE, 0, false, NULL );
+
 			break;
 		}
+// <---sikk
 	}
 }
 
